@@ -106,35 +106,72 @@ ostream& operator<<(ostream& os, const T_container& v) {
 
 i32 main() {
     fastio;
-    int n; cin >> n;
-    vi arr(n);
-    range(i, 0, n) cin >> arr[i];
+    // n workers, m bugs, s total budget
+    get1(n); get1(m); get1(s);
 
-    int total = accumulate(all(arr), 0LL);
+    vi bugDiff(m), sk(n), cost(n);
+    range(i, 0, m) cin >> bugDiff[i];
+    range(i, 0, n) cin >> sk[i];
+    range(i, 0, n) cin >> cost[i];
 
-    multiset<int> left, right(all(arr));
-    int lsum = 0, rsum = total;
+    // bugs sorted hardest-first so we greedily assign cheapest-capable worker
+    vii bugs(m);
+    range(i, 0, m) bugs[i] = {bugDiff[i], i};
+    sort(all(bugs), greater<pii>());
 
-    range(i, 0, n) {
-        int diff = lsum - rsum;
-        if (diff == 0) {
-            cout << "YES" newline;
-            return 0;
+    // ord: worker indices sorted by skill descending
+    vi ord(n);
+    iota(all(ord), 0);
+    sort(all(ord), [&](int a, int b) { return sk[a] > sk[b]; });
+
+    // check(d): can all bugs be fixed in d days within budget s?
+    // With d days, we need k=ceil(m/d) workers. Group j handles bugs[j*d..(j+1)*d-1]
+    // (sorted hardest-first), so group j needs a worker with skill >= bugs[j*d].diff.
+    // Greedily pick the cheapest eligible worker per group (hardest group first).
+    auto check = [&](int d) -> vi {
+        int k = (m + d - 1) / d;
+        if (k > n) return {};
+
+        pq<pii, vii, greater<pii>> avail;
+        int si = 0;
+        vi chosen(k);
+
+        range(j, 0, k) {
+            int threshold = bugs[j * d].first;
+            while (si < n && sk[ord[si]] >= threshold)
+                avail.push({cost[ord[si]], si++});
+            if (avail.empty()) return {};
+            auto [c, sidx] = avail.top(); avail.pop();
+            chosen[j] = sidx;
         }
-        if (diff % 2 != 0) continue;
-        int need = diff / 2;
-        if (need > 0) {
-            if (left.count(need)) { cout << "YES" newline; return 0; }
-        } else {
-            if (right.count(-need)) { cout << "YES" newline; return 0; }
-        }
 
-        left.insert(arr[i]);
-        right.erase(right.find(arr[i]));
-        lsum += arr[i];
-        rsum -= arr[i];
+        int total = 0;
+        range(j, 0, k) total += cost[ord[chosen[j]]];
+        if (total > s) return {};
+
+        vi assign(m);
+        range(j, 0, k) {
+            int start = j * d, end = min((j + 1) * d, m);
+            range(i, start, end) assign[bugs[i].second] = ord[chosen[j]] + 1;
+        }
+        return assign;
+    };
+
+    // binary search on d (max bugs per worker = days)
+    int lo = 1, hi = m;
+    vi best;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        vi res = check(mid);
+        if (!res.empty()) { best = res; hi = mid - 1; }
+        else lo = mid + 1;
     }
 
-    cout << "NO" newline;
+    if (best.empty()) {
+        cout << "NO" newline;
+    } else {
+        cout << "YES" newline;
+        range(i, 0, m) cout << best[i] << " \n"[i == m - 1];
+    }
     return 0;
 }
