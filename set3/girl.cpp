@@ -103,82 +103,41 @@ ostream& operator<<(ostream& os, const T_container& v) {
 
 #pragma endregion
 
-struct Node {
-    int sum, max;
-    int lval, rval;   // leftmost and rightmost values in range
-    bool inc, dec;    // is range non-decreasing / non-increasing?
-};
-const int N = 100100;
-Node rt[1 << 18];
-int n;
 
-Node merge(const Node& L, const Node& R) {
-    Node ret;
-    ret.sum  = L.sum + R.sum;
-    ret.max  = max(L.max, R.max);
-    ret.lval = L.lval;
-    ret.rval = R.rval;
-    ret.inc  = L.inc && R.inc && (L.rval <= R.lval);
-    ret.dec  = L.dec && R.dec && (L.rval >= R.lval);
-    return ret;
-}
-
-void update(int p, int v, int i = 1, int cL = 0, int cR = n) {
-    // if node is a leaf
-    if (cR - cL == 1) {
-        rt[i] = {v, v, v, v, true, true};
-        return;
-    }
-    int mid = (cL + cR) / 2;
-    // need to recursively update both sides
-    if (p < mid) {
-        update(p, v, 2*i, cL, mid);
-    } else {
-        update(p, v, 2*i + 1, mid, cR);
-    }
-    // after updating children, merge them
-    rt[i] = merge(rt[2*i], rt[2*i + 1]);
-}
-
-Node query(int qL, int qR, int i = 1, int cL = 0, int cR = n) {
-    // if query matches current range
-    if (qL == cL && qR == cR) return rt[i];
-
-    int mid = (cL + cR) / 2;
-    // query is entirely in left child
-    if (qR <= mid) return query(qL, qR, 2*i, cL, mid);
-    // query is entirely in right child
-    if (qL >= mid) return query(qL, qR, 2*i + 1, mid, cR);
-
-    return merge(query(qL, min(qR, mid), 2*i, cL, mid), query(max(qL, mid), qR, 2*i + 1, mid, cR));
-    
-}
 
 i32 main() {
     fastio;
 
-    int m;
+    int n, m;
     cin >> n >> m;
-
+    vi arr(n);
+    // store array
     range(i, 0, n) {
-        get(int, x);
-        update(i, x);
+        cin >> arr[i];
     }
 
+    // use difference array to mark ranges 
+    vi diff(n + 1, 0);
     range(_, 0, m) {
-        char op;
         int x, y;
-        cin >> op >> x >> y;
-        if (op == 'U') {
-            update(x-1, y);
-        } else {
-            Node res = query(x-1, y);  // 1-based [x,y] -> 0-based [x-1, y)
-            if      (op == 'M') cout << res.max newline;
-            else if (op == 'S') cout << res.sum newline;
-            else if (op == 'I') cout << res.inc newline;
-            else if (op == 'D') cout << res.dec newline;
-        }
+        cin >> x >> y;
+        diff[x - 1]++;
+        diff[y]--;
     }
+
+    // prefix sum gives count for each element
+    range(i, 1, n) diff[i] += diff[i - 1];
+
+
+    // pair highest count with highest in array and so on
+    sort(all(arr), greater<int>());
+    sort(all(diff), greater<int>());
+     
+    int sum = 0;
+    range(i, 0, n) {
+        sum += arr[i] * diff[i];
+    }
+    cout << sum newline;
 
     return 0;
 }
