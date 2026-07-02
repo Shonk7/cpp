@@ -12,30 +12,69 @@ using namespace std;
 #define all(c) c.begin(), c.end()
 #define space << " "
 #define newline << "\n"
+#include <bit>
 
 using namespace std;
 int n;
-i32 main() {
-    cin >> n;
-    vector<vector<int>> h(n, vector<int>(2, 0));
-    vector<vector<int>> dp(n + 1, vector<int>(2, 0));
-    for (int i = 0; i < n; i++) cin >> h[i][0];
-    for (int i = 0; i < n; i++) cin >> h[i][1];
-    // dp[0][0] = 0;
-    // dp[1][0] = 0;
-    dp[1][0] = h[0][0];
-    dp[1][1] = h[0][1];
-    for (int i = 2; i <= n; i++) {
-        for (int j = 0; j < 2; j++) {
-            dp[i][j] = max({
-                dp[i-1][(j+1) % 2] + h[i - 1][j],
-                dp[i-2][(j+1) % 2] + h[i - 1][j],
-                dp[i-2][j] + h[i - 1][j],
-                dp[i-1][j]
-            });
-        }
+const int N = 20;
+const int INF = 1e9;
+int adj[N][N]; 
+int dp[1<<N][N]; // dp[x][i] is the shortest 0->i path visiting set bits of x
+
+
+i32 main () {
+    int m, k;
+    cin >> n >> m >> k;
+    // satisfactions
+    int s[n];
+    for (int i = 0; i < n; i++) cin >> s[i];
+    for (int i = 0; i < k; i++)  {
+        int x, y, c;
+        cin >> x >> y >> c;
+        // bonus
+        adj[x - 1][y - 1] = c;
     }
 
-    cout << max(dp[n][0], dp[n][1]) newline;
+    // setting vlaues to -inf probs not needed
+    // for (int mask = 0; mask < (1<<n); mask++) {
+    //     for (int i = 0; i < n; i++) {
+    //         dp[mask][i] = -INF;
+    //         cout << dp[mask][i] newline;
+    //     }
+    // }
+
+    // base cases for any start dish - singleton
+    for (int i = 0; i < n; i++) {
+        dp[1 << i][i] = s[i];
+    }
+ 
+
+  for (int mask = 1; mask < (1<<n); mask++) {
+    // can only eat up to m
+    if (popcount((uint) mask) >= m) continue;
+    for (int cur = 0; cur < n; cur++) {
+        // only care if previosu choosen food is in mask
+        if (mask & (1<<cur)) { 
+            // current score
+            int cdp = dp[mask][cur]; 
+            for (int nxt = 0; nxt < n; nxt++) {
+                if (!(mask & (1<<nxt))) { 
+                    // if not choosen choose food
+                    dp[mask|(1<<nxt)][nxt] = max(dp[mask|(1<<nxt)][nxt], cdp + adj[cur][nxt] + s[nxt]);
+                }
+            }
+
+        }
+    }
+  }
+
+    int ans = 0;
+    for (int set = 0; set < (1<<n); set++) {
+        for (int i = 0; i < n; i++) {
+            ans = max(ans, dp[set][i]);
+        }
+    }
+    cout << ans newline;
+
     return 0;
 }
