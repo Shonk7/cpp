@@ -106,8 +106,10 @@ ostream& operator<<(ostream& os, const T_container& v) {
 // Union each password with its letters; count distinct roots among passwords.
 
 struct UF {
-    vi par, sz;
-    UF(int n) : par(n), sz(n, 1) { range(i, 0, n) par[i] = i; }
+    vector<int> par, sz;
+    UF(int n) : par(n), sz(n, 1) { 
+        for (int i = 0; i < n; i ++) par[i] = i; 
+    }
     int find(int x) { return par[x] == x ? x : par[x] = find(par[x]); }
     void unite(int a, int b) {
         a = find(a); b = find(b);
