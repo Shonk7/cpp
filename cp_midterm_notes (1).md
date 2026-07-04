@@ -123,7 +123,16 @@ sort(all(idx), [&](int i, int j){ return a[i] < a[j]; });
 
 Or the lecture pattern: store `(value, original_index)` pairs, sort, read the indices back out (Sodor).
 
-**Partial ops:** `nth_element(v.begin(), v.begin()+k, v.end());` — O(n) average, puts the k-th smallest at index k with smaller elements before it (median without full sort). `partial_sort` fully sorts just the first k.
+**Partial ops:**
+- `nth_element(v.begin(), v.begin()+k, v.end());`
+    - Average O(n).
+    - After call: `v[k]` is exactly the element that would be at index `k` in sorted order.
+    - All elements before `k` are `<= v[k]`, all after are `>= v[k]`, but both sides are **unsorted**.
+    - Great for median / k-th statistic without full sort.
+- Top-k largest split:
+    - `nth_element(v.begin(), v.begin()+k, v.end(), greater<>());`
+    - Then first `k` entries are the `k` largest (in any order).
+- `partial_sort(v.begin(), v.begin()+k, v.end());` fully sorts only first `k` elements.
 
 ### lower_bound / upper_bound on pairs
 
