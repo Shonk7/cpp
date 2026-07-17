@@ -1,6 +1,7 @@
 ## Commands for compiling 
 ```
  g++ -Wall -Wextra -Wshadow -fsanitize=address -fsanitize=undefined substring.cpp -o substring
+ g++-16 -Wall -Wextra -Wshadow -fsanitize=address -fsanitize=undefined pebbles.cpp -o pebbles
 ```
 
 ## if using Cin Cout
